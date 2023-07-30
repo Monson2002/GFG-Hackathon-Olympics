@@ -1,70 +1,76 @@
 import pandas as pd
 
 
-def medal_tally(df):
-    medal_tally = df.groupby("country_name").sum(numeric_only=True)[["GOLD", "SILVER", "BRONZE"]].sort_values(
-        by=["GOLD", "SILVER", "BRONZE"], ascending=[False, False, False]).reset_index()
-    medal_tally["Total"] = medal_tally["GOLD"] + \
-        medal_tally["SILVER"] + medal_tally["BRONZE"]
-    return medal_tally
+def fetch_medal_tally(df, year, country):
+    flag = 0
+    if country == "Region" and year == "Year":
+        temp_df = df
+    elif country != "Region" and year == "Year":
+        temp_df = df[df["Region"] == country]
+        flag = 1
+    elif country == "Region" and year != "Year":
+        temp_df = df[df["Year"] == year]
+    else:
+        temp_df = df[(df["Region"] == country) & (df["Year"] == year)]
+    if flag == 1:
+        df = temp_df.drop_duplicates(subset=['Team', 'NOC', 'Games', 'Year', 'Season', 'City', 'Sport', 'Event', 'Medal', 'Region']).groupby(
+            "Year").sum(numeric_only=True)[["Gold", "Silver", "Bronze"]].sort_values(by="Year", ascending=False).reset_index()
+    else:
+        df = temp_df.drop_duplicates(subset=['Team', 'NOC', 'Games', 'Year', 'Season', 'City', 'Sport', 'Event', 'Medal', 'Region']).groupby(
+            "Region").sum()[["Gold", "Silver", "Bronze"]].sort_values(by=["Gold"], ascending=False).reset_index()
+    df["Total"] = df["Gold"] + df["Silver"] + df["Bronze"]
+
+    return df
 
 
 def year_dropdown(df):
-    years = df["slug_game"].str[-4:].unique().tolist()
+    years = df["Year"].unique().tolist()
+    years.sort(reverse=True)
     years.insert(0, "Year")
     return years
 
 
 def country_dropdown(df):
-    country = df["country_name"].unique().tolist()
-    country.insert(0, "Country")
-    return country
-
-
-def fetch_medal_tally(df, year, country):
-    flag = 0
-    if country == "Country" and year == "Year":
-        temp_df = df
-    elif country != "Country" and year == "Year":
-        flag = 1
-        temp_df = df[df["country_name"] == country]
-    elif country == "Country" and year != "Year":
-        temp_df = df[df["slug_game"].str[-4:] == year]
-    else:
-        temp_df = df[(df["country_name"] == country) &
-                     (df["slug_game"].str[-4:] == year)]
-
-    if flag == 1:
-        x = temp_df.groupby("year").sum(numeric_only=True)[
-            ["GOLD", "SILVER", "BRONZE"]]
-        x.sort_values(by="year", ascending=False, inplace=True)
-        x.reset_index(inplace=True)
-    else:
-        x = temp_df.groupby("country_name").sum(numeric_only=True)[["GOLD", "SILVER", "BRONZE"]].sort_values(
-            by=["GOLD", "SILVER", "BRONZE"], ascending=[False, False, False]).reset_index()
-    x["TOTAL"] = x["GOLD"] + x["SILVER"] + x["BRONZE"]
-    return x
+    region_df = df["Region"].dropna()
+    regions = list(set(region_df.unique().tolist()))
+    regions.sort()
+    regions.insert(0, "Region")
+    return regions
 
 
 def no_of_editions(df):
-    return len(df["year"].unique().tolist())
+    return len(df["Year"].unique().tolist())
 
 
 def no_of_cities(df):
-    no_of_cities = []
-    for i in list(df["slug_game"].unique().tolist()):
-        if len(i.split("-")) > 2:
-            no_of_cities.append([i[:-5]])
-        else:
-            no_of_cities.append(i.split("-")[:-1])
-    return len(no_of_cities)
+    return df["City"].unique().size
 
 
 def no_of_events(df):
-    return len(df["discipline_title"].unique().tolist())
+    return len(df["Sport"].unique().tolist())
+
 
 def no_of_atheletes(df):
-    return len(df["athlete_full_name"].unique().tolist())
+    return len(df["Name"].unique().tolist())
+
 
 def no_of_participating_nations(df):
-    return len(df["country_3_letter_code"].unique().tolist())
+    return len(df["Region"].unique().tolist())
+
+def nations_over_the_years(df):
+    YOY_country_participation_data = df.drop_duplicates(subset=["Year","Region"])["Year"].value_counts().reset_index().sort_values(by="Year")
+    YOY_country_participation_data.rename(columns={"count":"Number of Participating Countries"}, inplace=True)
+
+    return YOY_country_participation_data
+
+def events_over_the_years(df):
+    YOY_events_data = df.drop_duplicates(subset=["Year","Event"])["Year"].value_counts().reset_index().sort_values(by="Year")
+    YOY_events_data.rename(columns={"count":"Number of Events"}, inplace=True)
+
+    return YOY_events_data
+
+def athletes_over_the_years(df):
+    YOY_atheletes_data = df.drop_duplicates(subset=["Year","Name"])["Year"].value_counts().reset_index().sort_values(by="Year")
+    YOY_atheletes_data.rename(columns={"count":"Number of Athletes"}, inplace=True)
+
+    return YOY_atheletes_data

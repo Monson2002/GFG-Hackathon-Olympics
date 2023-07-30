@@ -2,17 +2,18 @@ import streamlit as st
 import pandas as pd
 from Analysis import preprocess
 import helper
+import plotly.express as px
 
-df = pd.read_csv("./Datasets/medals.csv")
+df = pd.read_csv("./Datasets/athlete_events.csv")
+df_regions = pd.read_csv("./Datasets/noc_regions.csv")
 
-df = preprocess(df)
+df = preprocess(df, df_regions)
 
 st.sidebar.title("Olympics Analysis")
 
 clicked_option = st.sidebar.radio(
     "Select an option:",
-    ("Medal Tally", "Overall Analysis",
-     "Country-wise Analysis", "Athlete-wise Analysis")
+    ("Medal Tally", "Overall Analysis", "Country-wise Analysis", "Athlete-wise Analysis")
 )
 
 st.sidebar.header("Filters")
@@ -27,19 +28,17 @@ dropdown_country = st.sidebar.selectbox(
 
 
 if clicked_option == "Medal Tally":
-    if dropdown_country == "Country" and dropdown_year == "Year":
-        st.header("Overall Tally")
-    elif dropdown_country != "Country" and dropdown_year == "Year":
-        st.header(dropdown_country)
-    elif dropdown_country == "Country" and dropdown_year != "Year":
-        st.header("Medal Tally in " + dropdown_year + f" ")
+    if dropdown_country == "Region" and dropdown_year == "Year":
+        st.header("Overall Medal Tally")
+    elif dropdown_country != "Region" and dropdown_year == "Year":
+        st.header(dropdown_country + "'s Overall Medal Tally")
+    elif dropdown_country == "Region" and dropdown_year != "Year":
+        st.header("Overall Medal Tally in " + str(dropdown_year))
     else:
-        st.header(dropdown_country + " in " + dropdown_year)
+        st.header(dropdown_country + "'s Medal Tally in " + str(dropdown_year))
     x = helper.fetch_medal_tally(df, dropdown_year, dropdown_country)
     st.table(x)
 
-    # dropdown_year
-    # dropdown_country
 
 if clicked_option == "Overall Analysis":
     st.header("Analysis of Overall Games")
@@ -70,4 +69,25 @@ if clicked_option == "Overall Analysis":
     with col2:
         st.subheader("Nations: ")
         st.title(x)
+        
+    
+    st.header("Participating Nations over the years")
+    nations_over_the_years = helper.nations_over_the_years(df)
+    fig = px.line(nations_over_the_years, x="Year", y="Number of Participating Countries") 
+    st.plotly_chart(fig) 
+
+    st.header("Number of Events over the years")
+    events_over_the_years = helper.events_over_the_years(df)
+    fig = px.line(events_over_the_years, x="Year", y="Number of Events") 
+    st.plotly_chart(fig)
+    
+    st.header("Number of Athletes over the years")
+    athletes_over_the_years = helper.athletes_over_the_years(df)
+    fig = px.line(athletes_over_the_years, x="Year", y="Number of Athletes") 
+    st.plotly_chart(fig) 
+    
+
+     
+    
+    
 

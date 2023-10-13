@@ -17,7 +17,7 @@ st.sidebar.title("Olympics Analysis")
 clicked_option = st.sidebar.radio(
     "Select an option:",
     ("Medal Tally", "Overall Analysis",
-     "Country-wise Analysis", "Athlete-wise Analysis")
+     "Country-wise Analysis")
 )
 
 
@@ -113,18 +113,3 @@ if clicked_option == "Country-wise Analysis":
         st.header("Top 15 Athletes of " + dropdown_country)
         st.table(helper.top_15_per_country(df, dropdown_country))
 
-
-if clicked_option == "Athlete-wise Analysis":
-    st.header("Athelete Analysis Based On Age")
-    gold, silver, bronze = helper.athelete_tally_age_gold_silver_bronze(
-        df)
-    fig = ff.create_distplot([gold, silver, bronze], [
-                             "Golds", "Silver", "Bronze"], show_hist=False, show_rug=False)
-    st.plotly_chart(fig)
-    
-    st.header("Athelete Analysis Based On Age and Sports")
-    x, name = helper.athelete_age_vs_sport(df)    
-    plt.figure(figsize=(1, 1))
-    fig = ff.create_distplot(x, name, show_hist=False, show_rug=False)
-    fig.update_layout(autosize=False, width=800, height=600)
-    st.plotly_chart(fig)
